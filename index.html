@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Missa - Wallace</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        input[type="text"], select, textarea, button { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
+        textarea { resize: vertical; height: 150px; font-family: inherit; }
+        .btn-primary { background-color: #0056b3; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .btn-primary:hover { background-color: #004494; }
+        .btn-secondary { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; margin-bottom: 20px;}
+        .btn-secondary:hover { background-color: #218838; }
+        .btn-danger { background-color: #dc3545; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-danger:hover { background-color: #c82333; }
+        .btn-warning { background-color: #ffc107; color: black; border: none; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        .btn-warning:hover { background-color: #e0a800; }
+        .musica-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; align-items: center; }
+        .musica-item input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.5); }
+        .badge { background: #eee; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 10px; }
+        #formCadastro, #telaMissaHoje { display: none; }
+        .missa-hoje-item { background: #e9ecef; padding: 10px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #0056b3; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="card">
+        
+        <div id="telaAlmoxarifado">
+            <h2>🎵 Meu Repertório</h2>
+            <button id="btnNovaMusica" class="btn-secondary">➕ Adicionar Música</button>
+            
+            <div id="formCadastro" style="background: #fafafa; padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px;">
+                <h3>Cadastrar Nova Música</h3>
+                <input type="text" id="nomeMusica" placeholder="Nome da Música">
+                <select id="momentoMissa">
+                    <option value="Entrada">Entrada</option>
+                    <option value="Ato Penitencial">Ato Penitencial</option>
+                    <option value="Glória">Glória</option>
+                    <option value="Salmo">Salmo</option>
+                    <option value="Aclamação">Aclamação ao Evangelho</option>
+                    <option value="Ofertório">Ofertório</option>
+                    <option value="Santo">Santo</option>
+                    <option value="Comunhão">Comunhão</option>
+                    <option value="Final">Final (Envio)</option>
+                </select>
+                <textarea id="letraMusica" placeholder="Cola a letra da música aqui..."></textarea>
+                <button id="btnSalvar" class="btn-primary">Salvar no Banco</button>
+                <button id="btnCancelar" class="btn-danger">Cancelar</button>
+            </div>
+
+            <hr>
+
+            <h3>Músicas Salvas (Selecione para hoje)</h3>
+            <div id="listaMusicas">A conectar ao banco...</div>
+            
+            <button id="btnMontarMissa" class="btn-warning" style="display: none;">📋 Montar Missa de Hoje</button>
+        </div>
+
+        <div id="telaMissaHoje">
+            <h2>📝 Missa de Hoje</h2>
+            <p>A tua ordem de serviço está pronta. Segue o roteiro!</p>
+            <div id="listaMissaHoje"></div>
+            
+            <button id="btnVoltarAlmox" class="btn-secondary" style="margin-top: 20px;">⬅️ Voltar ao Repertório</button>
+        </div>
+
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkS_i4OA1uUtdRH_uBxQPuVvTfGWGqA2Q",
+            authDomain: "missa-app-5bf2d.firebaseapp.com",
+            projectId: "missa-app-5bf2d",
+            storageBucket: "missa-app-5bf2d.firebasestorage.app",
+            messagingSenderId: "1062220349232",
+            appId: "1:1062220349232:web:bb8dcbbf2334c3784e52f5"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Memória local rápida do nosso controlador
+        let musicasGlobais = {};
+
+        // Controles de Tela
+        const telaAlmox = document.getElementById('telaAlmoxarifado');
+        const telaMissa = document.getElementById('telaMissaHoje');
+        const formCad = document.getElementById('formCadastro');
+        const btnNova = document.getElementById('btnNovaMusica');
+        const btnMontar = document.getElementById('btnMontarMissa');
+
+        btnNova.addEventListener('click', () => { formCad.style.display = 'block'; btnNova.style.display = 'none'; });
+        document.getElementById('btnCancelar').addEventListener('click', () => { formCad.style.display = 'none'; btnNova.style.display = 'block'; });
+
+        // Salvar Música
+        document.getElementById('btnSalvar').addEventListener('click', () => {
+            const nome = document.getElementById('nomeMusica').value;
+            const momento = document.getElementById('momentoMissa').value;
+            const letra = document.getElementById('letraMusica').value;
+            
+            if(nome === "" || letra === "") return alert("Preenche o nome e a letra!");
+
+            db.collection("musicas_cadastradas").add({ nome, momento, letra }).then(() => {
+                document.getElementById('nomeMusica').value = ""; 
+                document.getElementById('letraMusica').value = ""; 
+                formCad.style.display = 'none';
+                btnNova.style.display = 'block';
+                carregarMusicas(); 
+            }).catch(e => alert("Erro: " + e.message));
+        });
+
+        // Carregar Músicas do Firebase
+        function carregarMusicas() {
+            const listaDiv = document.getElementById('listaMusicas');
+            db.collection("musicas_cadastradas").get().then((querySnapshot) => {
+                listaDiv.innerHTML = ""; 
+                musicasGlobais = {}; // Limpa a memória
+                
+                if(querySnapshot.empty) {
+                    listaDiv.innerHTML = "Nenhuma música cadastrada.";
+                    btnMontar.style.display = 'none';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const mus = doc.data();
+                    musicasGlobais[doc.id] = mus; // Guarda na memória RAM do app
+                    
+                    listaDiv.innerHTML += `
+                        <div class="musica-item">
+                            <input type="checkbox" class="check-musica" value="${doc.id}">
+                            <div>
+                                <span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>
+                            </div>
+                        </div>
+                    `;
+                });
+                btnMontar.style.display = 'block'; // Mostra o botão de montar missa
+            });
+        }
+
+        // Lógica de Montar a Missa (A "Ordem de Serviço")
+        btnMontar.addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('.check-musica:checked');
+            if(checkboxes.length === 0) return alert("Selecione pelo menos uma música para hoje!");
+
+            const listaHojeDiv = document.getElementById('listaMissaHoje');
+            listaHojeDiv.innerHTML = "";
+
+            checkboxes.forEach(chk => {
+                const mus = musicasGlobais[chk.value];
+                listaHojeDiv.innerHTML += `
+                    <div class="missa-hoje-item">
+                        <span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>
+                    </div>
+                `;
+            });
+
+            // Troca as telas
+            telaAlmox.style.display = 'none';
+            telaMissa.style.display = 'block';
+        });
+
+        // Voltar ao Almoxarifado
+        document.getElementById('btnVoltarAlmox').addEventListener('click', () => {
+            telaMissa.style.display = 'none';
+            telaAlmox.style.display = 'block';
+        });
+
+        carregarMusicas();
+    </script>
+</body>
+</html>
