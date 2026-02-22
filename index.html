@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -90,88 +90,4 @@
         const telaAlmox = document.getElementById('telaAlmoxarifado');
         const telaMissa = document.getElementById('telaMissaHoje');
         const formCad = document.getElementById('formCadastro');
-        const btnNova = document.getElementById('btnNovaMusica');
-        const btnMontar = document.getElementById('btnMontarMissa');
 
-        btnNova.addEventListener('click', () => { formCad.style.display = 'block'; btnNova.style.display = 'none'; });
-        document.getElementById('btnCancelar').addEventListener('click', () => { formCad.style.display = 'none'; btnNova.style.display = 'block'; });
-
-        // Salvar Música
-        document.getElementById('btnSalvar').addEventListener('click', () => {
-            const nome = document.getElementById('nomeMusica').value;
-            const momento = document.getElementById('momentoMissa').value;
-            const letra = document.getElementById('letraMusica').value;
-            
-            if(nome === "" || letra === "") return alert("Preenche o nome e a letra!");
-
-            db.collection("musicas_cadastradas").add({ nome, momento, letra }).then(() => {
-                document.getElementById('nomeMusica').value = ""; 
-                document.getElementById('letraMusica').value = ""; 
-                formCad.style.display = 'none';
-                btnNova.style.display = 'block';
-                carregarMusicas(); 
-            }).catch(e => alert("Erro: " + e.message));
-        });
-
-        // Carregar Músicas do Firebase
-        function carregarMusicas() {
-            const listaDiv = document.getElementById('listaMusicas');
-            db.collection("musicas_cadastradas").get().then((querySnapshot) => {
-                listaDiv.innerHTML = ""; 
-                musicasGlobais = {}; // Limpa a memória
-                
-                if(querySnapshot.empty) {
-                    listaDiv.innerHTML = "Nenhuma música cadastrada.";
-                    btnMontar.style.display = 'none';
-                    return;
-                }
-
-                querySnapshot.forEach((doc) => {
-                    const mus = doc.data();
-                    musicasGlobais[doc.id] = mus; // Guarda na memória RAM do app
-                    
-                    listaDiv.innerHTML += `
-                        <div class="musica-item">
-                            <input type="checkbox" class="check-musica" value="${doc.id}">
-                            <div>
-                                <span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>
-                            </div>
-                        </div>
-                    `;
-                });
-                btnMontar.style.display = 'block'; // Mostra o botão de montar missa
-            });
-        }
-
-        // Lógica de Montar a Missa (A "Ordem de Serviço")
-        btnMontar.addEventListener('click', () => {
-            const checkboxes = document.querySelectorAll('.check-musica:checked');
-            if(checkboxes.length === 0) return alert("Selecione pelo menos uma música para hoje!");
-
-            const listaHojeDiv = document.getElementById('listaMissaHoje');
-            listaHojeDiv.innerHTML = "";
-
-            checkboxes.forEach(chk => {
-                const mus = musicasGlobais[chk.value];
-                listaHojeDiv.innerHTML += `
-                    <div class="missa-hoje-item">
-                        <span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>
-                    </div>
-                `;
-            });
-
-            // Troca as telas
-            telaAlmox.style.display = 'none';
-            telaMissa.style.display = 'block';
-        });
-
-        // Voltar ao Almoxarifado
-        document.getElementById('btnVoltarAlmox').addEventListener('click', () => {
-            telaMissa.style.display = 'none';
-            telaAlmox.style.display = 'block';
-        });
-
-        carregarMusicas();
-    </script>
-</body>
-</html>
