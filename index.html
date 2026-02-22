@@ -1,5 +1,5 @@
-DOCTYPE html>
-<html lang="pt">
+M<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,7 @@ DOCTYPE html>
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
         input[type="text"], select, textarea, button { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
         textarea { resize: vertical; height: 150px; font-family: inherit; }
+        
         .btn-primary { background-color: #0056b3; color: white; border: none; cursor: pointer; font-weight: bold; }
         .btn-primary:hover { background-color: #004494; }
         .btn-secondary { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; margin-bottom: 20px;}
@@ -17,11 +18,21 @@ DOCTYPE html>
         .btn-danger:hover { background-color: #c82333; }
         .btn-warning { background-color: #ffc107; color: black; border: none; cursor: pointer; font-weight: bold; margin-top: 15px; }
         .btn-warning:hover { background-color: #e0a800; }
-        .musica-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; align-items: center; }
+        
+        /* Listas e layout do Almoxarifado */
+        .musica-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; align-items: center; justify-content: space-between; }
+        .musica-dados { display: flex; align-items: center; }
         .musica-item input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.5); }
         .badge { background: #eee; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 10px; }
-        #formCadastro, #telaMissaHoje { display: none; }
-        .missa-hoje-item { background: #e9ecef; padding: 10px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #0056b3; }
+        .btn-excluir { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: auto; margin: 0; font-size: 14px; }
+        
+        #formCadastro, #telaMissaHoje, #telaLetra { display: none; }
+        
+        .missa-hoje-item { background: #e9ecef; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #0056b3; cursor: pointer; font-size: 18px;}
+        .missa-hoje-item:hover { background: #d3d9df; }
+        
+        /* CSS da Letra Grande */
+        #textoLetraOperacao { white-space: pre-wrap; font-size: 20px; line-height: 1.5; background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px; min-height: 200px; margin-top: 10px;}
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
@@ -33,7 +44,7 @@ DOCTYPE html>
             <h2>🎵 Meu Repertório</h2>
             <button id="btnNovaMusica" class="btn-secondary">➕ Adicionar Música</button>
             
-            <div id="formCadastro" style="background: #fafafa; padding: 15px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px;">
+            <div id="formCadastro">
                 <h3>Cadastrar Nova Música</h3>
                 <input type="text" id="nomeMusica" placeholder="Nome da Música">
                 <select id="momentoMissa">
@@ -47,25 +58,31 @@ DOCTYPE html>
                     <option value="Comunhão">Comunhão</option>
                     <option value="Final">Final (Envio)</option>
                 </select>
-                <textarea id="letraMusica" placeholder="Cola a letra da música aqui..."></textarea>
+                <textarea id="letraMusica" placeholder="Cole a letra da música aqui..."></textarea>
                 <button id="btnSalvar" class="btn-primary">Salvar no Banco</button>
                 <button id="btnCancelar" class="btn-danger">Cancelar</button>
             </div>
 
             <hr>
 
-            <h3>Músicas Salvas (Selecione para hoje)</h3>
-            <div id="listaMusicas">A conectar ao banco...</div>
+            <h3>Músicas Salvas</h3>
+            <div id="listaMusicas">Conectando ao banco...</div>
             
             <button id="btnMontarMissa" class="btn-warning" style="display: none;">📋 Montar Missa de Hoje</button>
         </div>
 
         <div id="telaMissaHoje">
             <h2>📝 Missa de Hoje</h2>
-            <p>A tua ordem de serviço está pronta. Segue o roteiro!</p>
+            <p>Toque na música para ler a letra!</p>
             <div id="listaMissaHoje"></div>
             
             <button id="btnVoltarAlmox" class="btn-secondary" style="margin-top: 20px;">⬅️ Voltar ao Repertório</button>
+        </div>
+
+        <div id="telaLetra">
+            <h2 id="tituloLetraOperacao">Nome</h2>
+            <div id="textoLetraOperacao"></div>
+            <button id="btnVoltarMissa" class="btn-primary" style="margin-top: 20px;">⬅️ Voltar para a Missa</button>
         </div>
 
     </div>
@@ -83,11 +100,122 @@ DOCTYPE html>
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Memória local rápida do nosso controlador
         let musicasGlobais = {};
 
-        // Controles de Tela
         const telaAlmox = document.getElementById('telaAlmoxarifado');
         const telaMissa = document.getElementById('telaMissaHoje');
+        const telaLetra = document.getElementById('telaLetra');
+        
         const formCad = document.getElementById('formCadastro');
+        const btnNova = document.getElementById('btnNovaMusica');
+        const btnMontar = document.getElementById('btnMontarMissa');
+
+        btnNova.addEventListener('click', () => { formCad.style.display = 'block'; btnNova.style.display = 'none'; });
+        document.getElementById('btnCancelar').addEventListener('click', () => { formCad.style.display = 'none'; btnNova.style.display = 'block'; });
+
+        document.getElementById('btnSalvar').addEventListener('click', () => {
+            const nome = document.getElementById('nomeMusica').value;
+            const momento = document.getElementById('momentoMissa').value;
+            const letra = document.getElementById('letraMusica').value;
+            
+            if(nome === "" || letra === "") return alert("Preencha o nome e a letra!");
+
+            db.collection("musicas_cadastradas").add({ nome, momento, letra }).then(() => {
+                document.getElementById('nomeMusica').value = ""; 
+                document.getElementById('letraMusica').value = ""; 
+                formCad.style.display = 'none';
+                btnNova.style.display = 'block';
+                carregarMusicas(); 
+            }).catch(e => alert("Erro: " + e.message));
+        });
+
+        function carregarMusicas() {
+            const listaDiv = document.getElementById('listaMusicas');
+            db.collection("musicas_cadastradas").get().then((querySnapshot) => {
+                listaDiv.innerHTML = ""; 
+                musicasGlobais = {}; 
+                
+                if(querySnapshot.empty) {
+                    listaDiv.innerHTML = "Nenhuma música cadastrada.";
+                    btnMontar.style.display = 'none';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const mus = doc.data();
+                    musicasGlobais[doc.id] = mus; 
+                    
+                    // Adicionando o botão de excluir
+                    listaDiv.innerHTML += `
+                        <div class="musica-item">
+                            <div class="musica-dados">
+                                <input type="checkbox" class="check-musica" value="${doc.id}">
+                                <span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>
+                            </div>
+                            <button class="btn-excluir" data-id="${doc.id}">🗑️</button>
+                        </div>
+                    `;
+                });
+                btnMontar.style.display = 'block'; 
+                ativarBotoesExcluir(); // Liga os botões novos
+            });
+        }
+
+        // Função do Dreno (Excluir do Banco)
+        function ativarBotoesExcluir() {
+            document.querySelectorAll('.btn-excluir').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idDoc = e.target.getAttribute('data-id');
+                    // Confirmação dupla para não apagar sem querer
+                    if(confirm("Tem certeza que deseja apagar essa música definitivamente?")) {
+                        db.collection("musicas_cadastradas").doc(idDoc).delete().then(() => {
+                            carregarMusicas(); 
+                        }).catch(err => alert("Erro ao excluir: " + err.message));
+                    }
+                });
+            });
+        }
+
+        btnMontar.addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('.check-musica:checked');
+            if(checkboxes.length === 0) return alert("Selecione pelo menos uma música para hoje!");
+
+            const listaHojeDiv = document.getElementById('listaMissaHoje');
+            listaHojeDiv.innerHTML = "";
+
+            checkboxes.forEach(chk => {
+                const mus = musicasGlobais[chk.value];
+                const divMusica = document.createElement('div');
+                divMusica.className = 'missa-hoje-item';
+                divMusica.innerHTML = `<span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>`;
+                
+                divMusica.addEventListener('click', () => {
+                    document.getElementById('tituloLetraOperacao').innerText = mus.nome;
+                    document.getElementById('textoLetraOperacao').innerText = mus.letra;
+                    telaMissa.style.display = 'none';
+                    telaLetra.style.display = 'block';
+                });
+
+                listaHojeDiv.appendChild(divMusica);
+            });
+
+            telaAlmox.style.display = 'none';
+            telaMissa.style.display = 'block';
+        });
+
+        document.getElementById('btnVoltarAlmox').addEventListener('click', () => {
+            telaMissa.style.display = 'none';
+            telaAlmox.style.display = 'block';
+        });
+
+        document.getElementById('btnVoltarMissa').addEventListener('click', () => {
+            telaLetra.style.display = 'none';
+            telaMissa.style.display = 'block';
+        });
+
+        carregarMusicas();
+    </script>
+</body>
+</html>
+
 
