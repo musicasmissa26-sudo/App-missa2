@@ -5,34 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App Missa - Wallace</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        input[type="text"], select, textarea, button { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
+        /* TEMA DARK MODE - TONS DE AZUL ESCURO E ERGONOMIA */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #0b1120; color: #e2e8f0; }
+        .card { background: #1e293b; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 500px; margin: auto; border: 1px solid #334155; }
+        
+        /* Entradas de Texto e Seleção */
+        input[type="text"], select, textarea { width: 100%; padding: 14px; margin: 10px 0; box-sizing: border-box; border-radius: 12px; border: 1px solid #475569; background-color: #0f172a; color: #f8fafc; font-size: 16px; transition: border 0.3s; }
         textarea { resize: vertical; height: 150px; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
         
-        .btn-primary { background-color: #0056b3; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .btn-primary:hover { background-color: #004494; }
-        .btn-secondary { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; margin-bottom: 20px;}
-        .btn-secondary:hover { background-color: #218838; }
-        .btn-danger { background-color: #dc3545; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; }
-        .btn-danger:hover { background-color: #c82333; }
-        .btn-warning { background-color: #ffc107; color: black; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; }
-        .btn-warning:hover { background-color: #e0a800; }
-        .btn-pasta { background-color: #17a2b8; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; width: auto; margin-right: 5px;}
+        /* Botões Arredondados e Modernos */
+        button { width: 100%; padding: 14px; margin: 10px 0; box-sizing: border-box; border-radius: 30px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        button:active { transform: scale(0.98); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         
-        .musica-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; align-items: center; justify-content: space-between; }
+        .btn-primary { background-color: #2563eb; color: white; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-secondary { background-color: #0ea5e9; color: white; margin-bottom: 20px;}
+        .btn-secondary:hover { background-color: #0284c7; }
+        .btn-danger { background-color: #ef4444; color: white; margin-top: 5px; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-warning { background-color: #f59e0b; color: #fff; margin-top: 5px; }
+        .btn-warning:hover { background-color: #d97706; }
+        
+        .btn-pasta { background-color: #3b82f6; color: white; width: auto; margin-right: 10px; padding: 12px 20px; display: flex; align-items: center; justify-content: flex-start; }
+        .btn-pasta:hover { background-color: #2563eb; }
+        
+        /* Listas do Almoxarifado */
+        .musica-item { border-bottom: 1px solid #334155; padding: 15px 0; display: flex; align-items: center; justify-content: space-between; }
         .musica-dados { display: flex; align-items: center; }
-        .musica-item input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.5); }
-        .badge { background: #eee; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 10px; }
-        .btn-excluir { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: auto; margin: 0; font-size: 14px; }
+        .musica-item input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.6); accent-color: #3b82f6; }
         
+        .badge { background: #334155; color: #cbd5e1; padding: 5px 12px; border-radius: 15px; font-size: 0.8em; margin-right: 12px; border: 1px solid #475569; font-weight: bold; }
+        
+        .btn-excluir { background: #ef4444; color: white; border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; margin: 0; font-size: 16px; flex-shrink: 0; box-shadow: none; }
+        .btn-excluir:hover { background: #dc2626; transform: scale(1.1); }
+        
+        /* Ocultar Telas */
         #formCadastro, #telaMissaHoje, #telaLetra, #controlesSelecao { display: none; }
         
-        .missa-hoje-item { background: #e9ecef; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #0056b3; cursor: pointer; font-size: 18px;}
-        .missa-hoje-item:hover { background: #d3d9df; }
+        /* Itens da Missa e Pastas */
+        .missa-hoje-item { background: #0f172a; padding: 18px; margin-bottom: 15px; border-radius: 15px; border-left: 6px solid #3b82f6; cursor: pointer; font-size: 18px; transition: background 0.2s; display: flex; align-items: center; }
+        .missa-hoje-item:hover { background: #1e293b; }
         
-        #textoLetraOperacao { white-space: pre-wrap; font-size: 20px; line-height: 1.5; background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px; min-height: 200px; margin-top: 10px;}
-        .pasta-item { display: flex; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 5px;}
+        .pasta-item { display: flex; align-items: center; margin-bottom: 15px; background: #0f172a; padding: 10px; border-radius: 20px; border: 1px solid #334155;}
+        
+        /* Tela de Letra e Controles */
+        #controlesSelecao { background: #0f172a; padding: 25px; border-radius: 20px; border: 1px solid #334155; margin-top: 25px; }
+        #textoLetraOperacao { white-space: pre-wrap; font-size: 24px; line-height: 1.6; background: #0f172a; color: #f8fafc; padding: 25px; border-radius: 16px; border: 1px solid #334155; min-height: 250px; margin-top: 20px; font-weight: 500;}
+        
+        hr { border: none; border-top: 1px solid #334155; margin: 25px 0; }
+        h2, h3 { color: #f8fafc; margin-top: 0; }
+        p { color: #94a3b8; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
@@ -72,11 +95,11 @@
 
             <div id="listaMusicas" style="margin-top: 20px;">Conectando ao banco...</div>
             
-            <div id="controlesSelecao" style="background: #e9ecef; padding: 15px; border-radius: 5px; margin-top: 20px;">
+            <div id="controlesSelecao">
                 <h3 style="margin-top: 0;">Salvar Seleção</h3>
                 <input type="text" id="nomeNovaPasta" placeholder="Nome da nova pasta (Ex: Casamento)">
                 <button id="btnSalvarPasta" class="btn-primary">💾 Salvar como Pasta</button>
-                <p style="text-align: center; margin: 5px 0;">ou</p>
+                <p style="text-align: center; margin: 10px 0;">ou</p>
                 <button id="btnMontarMissa" class="btn-warning">📋 Apenas Montar (Sem Salvar)</button>
             </div>
         </div>
@@ -122,7 +145,6 @@
         btnNova.addEventListener('click', () => { formCad.style.display = 'block'; btnNova.style.display = 'none'; });
         document.getElementById('btnCancelar').addEventListener('click', () => { formCad.style.display = 'none'; btnNova.style.display = 'block'; });
 
-        // Salvar Nova Música
         document.getElementById('btnSalvar').addEventListener('click', () => {
             const nome = document.getElementById('nomeMusica').value;
             const momento = document.getElementById('momentoMissa').value;
@@ -139,7 +161,6 @@
             }).catch(e => alert("Erro: " + e.message));
         });
 
-        // Carregar Músicas do Banco
         function carregarMusicas() {
             const listaDiv = document.getElementById('listaMusicas');
             db.collection("musicas_cadastradas").get().then((querySnapshot) => {
@@ -147,7 +168,7 @@
                 musicasGlobais = {}; 
                 
                 if(querySnapshot.empty) {
-                    listaDiv.innerHTML = "Nenhuma música cadastrada.";
+                    listaDiv.innerHTML = "<p>Nenhuma música cadastrada.</p>";
                     controlesSelecao.style.display = 'none';
                     return;
                 }
@@ -182,9 +203,6 @@
             });
         }
 
-        // --- LÓGICA DAS PASTAS (A MÁGICA NOVA) ---
-
-        // Salvar a Pasta
         document.getElementById('btnSalvarPasta').addEventListener('click', () => {
             const nomePasta = document.getElementById('nomeNovaPasta').value;
             if(nomePasta === "") return alert("Digite um nome para a pasta!");
@@ -201,17 +219,16 @@
             }).then(() => {
                 document.getElementById('nomeNovaPasta').value = "";
                 alert("Pasta salva com sucesso!");
-                carregarPastas(); // Atualiza a prateleira de pastas
+                carregarPastas(); 
             }).catch(e => alert("Erro ao salvar pasta: " + e.message));
         });
 
-        // Carregar as Pastas na Tela Inicial
         function carregarPastas() {
             const listaPastasDiv = document.getElementById('listaPastas');
             db.collection("pastas_salvas").get().then((querySnapshot) => {
                 listaPastasDiv.innerHTML = "";
                 if(querySnapshot.empty) {
-                    listaPastasDiv.innerHTML = "Nenhuma pasta salva ainda.";
+                    listaPastasDiv.innerHTML = "<p>Nenhuma pasta salva ainda.</p>";
                     return;
                 }
 
@@ -243,7 +260,6 @@
             });
         }
 
-        // Função universal para abrir a Missa (seja via Pasta ou via Apenas Montar)
         function abrirMissa(arrayIds, titulo) {
             document.getElementById('tituloMissaHoje').innerText = `📝 ${titulo}`;
             const listaHojeDiv = document.getElementById('listaMissaHoje');
@@ -251,7 +267,7 @@
 
             arrayIds.forEach(id => {
                 const mus = musicasGlobais[id];
-                if(mus) { // Só puxa se a música ainda existir no banco
+                if(mus) { 
                     const divMusica = document.createElement('div');
                     divMusica.className = 'missa-hoje-item';
                     divMusica.innerHTML = `<span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>`;
@@ -270,7 +286,6 @@
             telaMissa.style.display = 'block';
         }
 
-        // Botão de Montar Avulso (Sem Salvar Pasta)
         document.getElementById('btnMontarMissa').addEventListener('click', () => {
             const checkboxes = document.querySelectorAll('.check-musica:checked');
             if(checkboxes.length === 0) return alert("Selecione pelo menos uma música para hoje!");
@@ -281,9 +296,7 @@
             abrirMissa(idsSelecionados, "Missa Avulsa");
         });
 
-        // Botões de Voltar
         document.getElementById('btnVoltarAlmox').addEventListener('click', () => {
-            // Desmarca os checkboxes ao voltar, como num reset de máquina
             document.querySelectorAll('.check-musica').forEach(chk => chk.checked = false);
             telaMissa.style.display = 'none';
             telaAlmox.style.display = 'block';
@@ -294,7 +307,6 @@
             telaMissa.style.display = 'block';
         });
 
-        // Partida inicial
         carregarMusicas();
         carregarPastas();
     </script>
