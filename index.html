@@ -1,4 +1,4 @@
-M<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -16,23 +16,23 @@ M<!DOCTYPE html>
         .btn-secondary:hover { background-color: #218838; }
         .btn-danger { background-color: #dc3545; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; }
         .btn-danger:hover { background-color: #c82333; }
-        .btn-warning { background-color: #ffc107; color: black; border: none; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        .btn-warning { background-color: #ffc107; color: black; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; }
         .btn-warning:hover { background-color: #e0a800; }
+        .btn-pasta { background-color: #17a2b8; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; width: auto; margin-right: 5px;}
         
-        /* Listas e layout do Almoxarifado */
         .musica-item { border-bottom: 1px solid #ddd; padding: 10px 0; display: flex; align-items: center; justify-content: space-between; }
         .musica-dados { display: flex; align-items: center; }
         .musica-item input[type="checkbox"] { width: auto; margin-right: 15px; transform: scale(1.5); }
         .badge { background: #eee; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-right: 10px; }
         .btn-excluir { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; width: auto; margin: 0; font-size: 14px; }
         
-        #formCadastro, #telaMissaHoje, #telaLetra { display: none; }
+        #formCadastro, #telaMissaHoje, #telaLetra, #controlesSelecao { display: none; }
         
         .missa-hoje-item { background: #e9ecef; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #0056b3; cursor: pointer; font-size: 18px;}
         .missa-hoje-item:hover { background: #d3d9df; }
         
-        /* CSS da Letra Grande */
         #textoLetraOperacao { white-space: pre-wrap; font-size: 20px; line-height: 1.5; background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px; min-height: 200px; margin-top: 10px;}
+        .pasta-item { display: flex; align-items: center; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 5px;}
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
@@ -41,7 +41,14 @@ M<!DOCTYPE html>
     <div class="card">
         
         <div id="telaAlmoxarifado">
-            <h2>🎵 Meu Repertório</h2>
+            
+            <div id="secaoPastas">
+                <h2>📂 Meus Repertórios Salvos</h2>
+                <div id="listaPastas">Carregando pastas...</div>
+                <hr>
+            </div>
+
+            <h2>🎵 Banco de Músicas</h2>
             <button id="btnNovaMusica" class="btn-secondary">➕ Adicionar Música</button>
             
             <div id="formCadastro">
@@ -63,26 +70,28 @@ M<!DOCTYPE html>
                 <button id="btnCancelar" class="btn-danger">Cancelar</button>
             </div>
 
-            <hr>
-
-            <h3>Músicas Salvas</h3>
-            <div id="listaMusicas">Conectando ao banco...</div>
+            <div id="listaMusicas" style="margin-top: 20px;">Conectando ao banco...</div>
             
-            <button id="btnMontarMissa" class="btn-warning" style="display: none;">📋 Montar Missa de Hoje</button>
+            <div id="controlesSelecao" style="background: #e9ecef; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <h3 style="margin-top: 0;">Salvar Seleção</h3>
+                <input type="text" id="nomeNovaPasta" placeholder="Nome da nova pasta (Ex: Casamento)">
+                <button id="btnSalvarPasta" class="btn-primary">💾 Salvar como Pasta</button>
+                <p style="text-align: center; margin: 5px 0;">ou</p>
+                <button id="btnMontarMissa" class="btn-warning">📋 Apenas Montar (Sem Salvar)</button>
+            </div>
         </div>
 
         <div id="telaMissaHoje">
-            <h2>📝 Missa de Hoje</h2>
+            <h2 id="tituloMissaHoje">📝 Missa de Hoje</h2>
             <p>Toque na música para ler a letra!</p>
             <div id="listaMissaHoje"></div>
-            
-            <button id="btnVoltarAlmox" class="btn-secondary" style="margin-top: 20px;">⬅️ Voltar ao Repertório</button>
+            <button id="btnVoltarAlmox" class="btn-secondary" style="margin-top: 20px;">⬅️ Voltar ao Início</button>
         </div>
 
         <div id="telaLetra">
             <h2 id="tituloLetraOperacao">Nome</h2>
             <div id="textoLetraOperacao"></div>
-            <button id="btnVoltarMissa" class="btn-primary" style="margin-top: 20px;">⬅️ Voltar para a Missa</button>
+            <button id="btnVoltarMissa" class="btn-primary" style="margin-top: 20px;">⬅️ Voltar para a Lista</button>
         </div>
 
     </div>
@@ -108,11 +117,12 @@ M<!DOCTYPE html>
         
         const formCad = document.getElementById('formCadastro');
         const btnNova = document.getElementById('btnNovaMusica');
-        const btnMontar = document.getElementById('btnMontarMissa');
+        const controlesSelecao = document.getElementById('controlesSelecao');
 
         btnNova.addEventListener('click', () => { formCad.style.display = 'block'; btnNova.style.display = 'none'; });
         document.getElementById('btnCancelar').addEventListener('click', () => { formCad.style.display = 'none'; btnNova.style.display = 'block'; });
 
+        // Salvar Nova Música
         document.getElementById('btnSalvar').addEventListener('click', () => {
             const nome = document.getElementById('nomeMusica').value;
             const momento = document.getElementById('momentoMissa').value;
@@ -129,6 +139,7 @@ M<!DOCTYPE html>
             }).catch(e => alert("Erro: " + e.message));
         });
 
+        // Carregar Músicas do Banco
         function carregarMusicas() {
             const listaDiv = document.getElementById('listaMusicas');
             db.collection("musicas_cadastradas").get().then((querySnapshot) => {
@@ -137,7 +148,7 @@ M<!DOCTYPE html>
                 
                 if(querySnapshot.empty) {
                     listaDiv.innerHTML = "Nenhuma música cadastrada.";
-                    btnMontar.style.display = 'none';
+                    controlesSelecao.style.display = 'none';
                     return;
                 }
 
@@ -145,7 +156,6 @@ M<!DOCTYPE html>
                     const mus = doc.data();
                     musicasGlobais[doc.id] = mus; 
                     
-                    // Adicionando o botão de excluir
                     listaDiv.innerHTML += `
                         <div class="musica-item">
                             <div class="musica-dados">
@@ -156,54 +166,125 @@ M<!DOCTYPE html>
                         </div>
                     `;
                 });
-                btnMontar.style.display = 'block'; 
-                ativarBotoesExcluir(); // Liga os botões novos
+                controlesSelecao.style.display = 'block'; 
+                ativarBotoesExcluirMusica();
             });
         }
 
-        // Função do Dreno (Excluir do Banco)
-        function ativarBotoesExcluir() {
+        function ativarBotoesExcluirMusica() {
             document.querySelectorAll('.btn-excluir').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const idDoc = e.target.getAttribute('data-id');
-                    // Confirmação dupla para não apagar sem querer
-                    if(confirm("Tem certeza que deseja apagar essa música definitivamente?")) {
-                        db.collection("musicas_cadastradas").doc(idDoc).delete().then(() => {
-                            carregarMusicas(); 
-                        }).catch(err => alert("Erro ao excluir: " + err.message));
+                    if(confirm("Apagar essa música do banco de dados geral?")) {
+                        db.collection("musicas_cadastradas").doc(idDoc).delete().then(carregarMusicas);
                     }
                 });
             });
         }
 
-        btnMontar.addEventListener('click', () => {
-            const checkboxes = document.querySelectorAll('.check-musica:checked');
-            if(checkboxes.length === 0) return alert("Selecione pelo menos uma música para hoje!");
+        // --- LÓGICA DAS PASTAS (A MÁGICA NOVA) ---
 
+        // Salvar a Pasta
+        document.getElementById('btnSalvarPasta').addEventListener('click', () => {
+            const nomePasta = document.getElementById('nomeNovaPasta').value;
+            if(nomePasta === "") return alert("Digite um nome para a pasta!");
+
+            const checkboxes = document.querySelectorAll('.check-musica:checked');
+            if(checkboxes.length === 0) return alert("Selecione pelo menos uma música para colocar na pasta!");
+
+            const musicasSelecionadas = [];
+            checkboxes.forEach(chk => musicasSelecionadas.push(chk.value));
+
+            db.collection("pastas_salvas").add({
+                nome: nomePasta,
+                musicas_ids: musicasSelecionadas
+            }).then(() => {
+                document.getElementById('nomeNovaPasta').value = "";
+                alert("Pasta salva com sucesso!");
+                carregarPastas(); // Atualiza a prateleira de pastas
+            }).catch(e => alert("Erro ao salvar pasta: " + e.message));
+        });
+
+        // Carregar as Pastas na Tela Inicial
+        function carregarPastas() {
+            const listaPastasDiv = document.getElementById('listaPastas');
+            db.collection("pastas_salvas").get().then((querySnapshot) => {
+                listaPastasDiv.innerHTML = "";
+                if(querySnapshot.empty) {
+                    listaPastasDiv.innerHTML = "Nenhuma pasta salva ainda.";
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const pasta = doc.data();
+                    
+                    const divPasta = document.createElement('div');
+                    divPasta.className = 'pasta-item';
+                    
+                    const btnAbrir = document.createElement('button');
+                    btnAbrir.className = 'btn-pasta';
+                    btnAbrir.innerHTML = `📂 ${pasta.nome}`;
+                    btnAbrir.style.flexGrow = "1";
+                    btnAbrir.addEventListener('click', () => abrirMissa(pasta.musicas_ids, pasta.nome));
+
+                    const btnExcluir = document.createElement('button');
+                    btnExcluir.className = 'btn-excluir';
+                    btnExcluir.innerHTML = '🗑️';
+                    btnExcluir.addEventListener('click', () => {
+                        if(confirm(`Tem certeza que deseja apagar a pasta "${pasta.nome}"?`)) {
+                            db.collection("pastas_salvas").doc(doc.id).delete().then(carregarPastas);
+                        }
+                    });
+
+                    divPasta.appendChild(btnAbrir);
+                    divPasta.appendChild(btnExcluir);
+                    listaPastasDiv.appendChild(divPasta);
+                });
+            });
+        }
+
+        // Função universal para abrir a Missa (seja via Pasta ou via Apenas Montar)
+        function abrirMissa(arrayIds, titulo) {
+            document.getElementById('tituloMissaHoje').innerText = `📝 ${titulo}`;
             const listaHojeDiv = document.getElementById('listaMissaHoje');
             listaHojeDiv.innerHTML = "";
 
-            checkboxes.forEach(chk => {
-                const mus = musicasGlobais[chk.value];
-                const divMusica = document.createElement('div');
-                divMusica.className = 'missa-hoje-item';
-                divMusica.innerHTML = `<span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>`;
-                
-                divMusica.addEventListener('click', () => {
-                    document.getElementById('tituloLetraOperacao').innerText = mus.nome;
-                    document.getElementById('textoLetraOperacao').innerText = mus.letra;
-                    telaMissa.style.display = 'none';
-                    telaLetra.style.display = 'block';
-                });
-
-                listaHojeDiv.appendChild(divMusica);
+            arrayIds.forEach(id => {
+                const mus = musicasGlobais[id];
+                if(mus) { // Só puxa se a música ainda existir no banco
+                    const divMusica = document.createElement('div');
+                    divMusica.className = 'missa-hoje-item';
+                    divMusica.innerHTML = `<span class="badge">${mus.momento}</span> <strong>${mus.nome}</strong>`;
+                    
+                    divMusica.addEventListener('click', () => {
+                        document.getElementById('tituloLetraOperacao').innerText = mus.nome;
+                        document.getElementById('textoLetraOperacao').innerText = mus.letra;
+                        telaMissa.style.display = 'none';
+                        telaLetra.style.display = 'block';
+                    });
+                    listaHojeDiv.appendChild(divMusica);
+                }
             });
 
             telaAlmox.style.display = 'none';
             telaMissa.style.display = 'block';
+        }
+
+        // Botão de Montar Avulso (Sem Salvar Pasta)
+        document.getElementById('btnMontarMissa').addEventListener('click', () => {
+            const checkboxes = document.querySelectorAll('.check-musica:checked');
+            if(checkboxes.length === 0) return alert("Selecione pelo menos uma música para hoje!");
+
+            const idsSelecionados = [];
+            checkboxes.forEach(chk => idsSelecionados.push(chk.value));
+            
+            abrirMissa(idsSelecionados, "Missa Avulsa");
         });
 
+        // Botões de Voltar
         document.getElementById('btnVoltarAlmox').addEventListener('click', () => {
+            // Desmarca os checkboxes ao voltar, como num reset de máquina
+            document.querySelectorAll('.check-musica').forEach(chk => chk.checked = false);
             telaMissa.style.display = 'none';
             telaAlmox.style.display = 'block';
         });
@@ -213,9 +294,9 @@ M<!DOCTYPE html>
             telaMissa.style.display = 'block';
         });
 
+        // Partida inicial
         carregarMusicas();
+        carregarPastas();
     </script>
 </body>
 </html>
-
-
